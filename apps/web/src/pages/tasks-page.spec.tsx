@@ -24,6 +24,12 @@ vi.mock('../lib/api-client', () => ({
           priority: 'HIGH',
           dueDate: '2026-12-31T00:00:00.000Z',
           ownerId: 'usr-1',
+          categoryId: 'category-1',
+          category: {
+            id: 'category-1',
+            name: 'Infraestrutura',
+            color: '#2563EB',
+          },
           createdAt: '2026-08-31T10:00:00.000Z',
           updatedAt: '2026-08-31T10:00:00.000Z',
         },
@@ -41,6 +47,25 @@ vi.mock('../lib/api-client', () => ({
   tasksControllerCreate: vi.fn(),
   tasksControllerUpdate: vi.fn(),
   tasksControllerRemove: vi.fn(),
+  categoriesControllerFindAll: vi.fn().mockResolvedValue({
+    data: {
+      data: [
+        {
+          id: 'category-1',
+          name: 'Infraestrutura',
+          description: null,
+          color: '#2563EB',
+          ownerId: 'usr-1',
+          taskCount: 1,
+          createdAt: '2026-08-31T10:00:00.000Z',
+          updatedAt: '2026-08-31T10:00:00.000Z',
+        },
+      ],
+      meta: { page: 1, pageSize: 100, total: 1, totalPages: 1 },
+    },
+    status: 200,
+    headers: new Headers(),
+  }),
 }));
 
 describe('TasksPage', () => {
@@ -64,5 +89,24 @@ describe('TasksPage', () => {
     expect(screen.getByText('Definir pipeline no GitHub Actions')).toBeInTheDocument();
     expect(screen.getAllByText('Alta').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('Pendente').length).toBeGreaterThanOrEqual(1);
+  });
+
+  it('shows the category of each task and offers the category filter', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: {
+        queries: { retry: false },
+      },
+    });
+
+    render(
+      <QueryClientProvider client={queryClient}>
+        <MemoryRouter>
+          <TasksPage />
+        </MemoryRouter>
+      </QueryClientProvider>,
+    );
+
+    expect(await screen.findByTitle('Categoria: Infraestrutura')).toBeInTheDocument();
+    expect(await screen.findByText('Todas as Categorias')).toBeInTheDocument();
   });
 });
