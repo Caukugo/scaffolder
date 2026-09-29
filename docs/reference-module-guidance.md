@@ -29,6 +29,31 @@ O módulo `tasks` implementa um ciclo CRUD completo ponta a ponta com padrões d
 
 ---
 
+## 🏷️ Extensão do Módulo: Categorias de Tarefas
+
+O módulo `categories` (`apps/api/src/categories/`) é um segundo módulo de domínio que se relaciona com `tasks` e demonstra como estender o template sem quebrar as fronteiras existentes:
+
+1. **Persistência:**
+   - Entidade `Category` com `ownerId`, `color` hexadecimal e remoção lógica (`deletedAt`).
+   - `Task.categoryId` é uma FK **opcional** com `ON DELETE SET NULL`: excluir a categoria nunca apaga tarefas.
+   - Migration versionada em `apps/api/prisma/migrations/20260928_task_categories/`.
+
+2. **Regras de Negócio e Autorização:**
+   - **Nome único por usuário:** duas categorias ativas do mesmo dono não podem ter o mesmo nome (comparação *case-insensitive*, resposta `409 Conflict`).
+   - **Ownership:** um usuário só vê e altera as próprias categorias; `ADMIN` possui visão global.
+   - **Remoção lógica com desvínculo:** ao excluir uma categoria, as tarefas ativas são desvinculadas (`categoryId = null`) na mesma transação.
+   - **Categoria sempre do dono da tarefa:** ao criar ou editar uma tarefa, o `TasksService` chama `CategoriesService.resolveOwnedCategory()` para impedir o vínculo com categoria de outro usuário — inclusive quando quem edita é um `ADMIN`.
+
+3. **Fronteira entre módulos:**
+   - `TasksModule` importa `CategoriesModule` e recebe `CategoriesService` por injeção de dependência. O acoplamento fica em uma interface pública explícita, e não em consultas espalhadas pelo Prisma.
+
+4. **Interface Web:**
+   - Tela dedicada em `apps/web/src/pages/categories-page.tsx` (CRUD, contador de tarefas por categoria e seletor de cor).
+   - Em `tasks-page.tsx`: seletor de categoria nos formulários, etiqueta colorida no cartão e filtro `categoryId` sincronizado na URL.
+   - As mutações de categoria invalidam as queries `['categories']` e `['tasks']`, pois a tarefa exibe o rótulo da categoria.
+
+---
+
 ## 🔄 Como Renomear o Módulo
 
 Caso deseje transformar o módulo `tasks` em outro domínio (ex.: `projects`, `products`, `orders`):

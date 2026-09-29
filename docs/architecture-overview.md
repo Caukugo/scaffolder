@@ -62,6 +62,8 @@ sequenceDiagram
 erDiagram
     UserProfile ||--o{ Session : "possui"
     UserProfile ||--o{ Task : "é proprietário de"
+    UserProfile ||--o{ Category : "é proprietário de"
+    Category ||--o{ Task : "classifica"
 
     UserProfile {
         uuid id PK
@@ -84,6 +86,17 @@ erDiagram
         datetime createdAt
     }
 
+    Category {
+        uuid id PK
+        string name
+        string description
+        string color "hexadecimal, ex.: #2563EB"
+        uuid ownerId FK
+        datetime deletedAt
+        datetime createdAt
+        datetime updatedAt
+    }
+
     Task {
         uuid id PK
         string title
@@ -92,6 +105,7 @@ erDiagram
         enum priority "LOW | MEDIUM | HIGH | URGENT"
         datetime dueDate
         uuid ownerId FK
+        uuid categoryId FK "opcional"
         datetime deletedAt
         datetime createdAt
         datetime updatedAt
@@ -124,6 +138,11 @@ erDiagram
 | `GET` | `/api/v1/tasks/:id` | Sessão | `USER` | Detalhes da tarefa (owner ou admin) |
 | `PUT` | `/api/v1/tasks/:id` | Sessão + CSRF | `USER` | Atualiza tarefa respeitando regras de transição |
 | `DELETE`| `/api/v1/tasks/:id` | Sessão + CSRF | `USER` | Remoção lógica (*soft delete*) da tarefa |
+| `GET` | `/api/v1/categories` | Sessão | `USER` | Lista categorias com paginação, busca e ordenação |
+| `POST` | `/api/v1/categories` | Sessão + CSRF | `USER` | Cria categoria com ownership e nome único por usuário |
+| `GET` | `/api/v1/categories/:id` | Sessão | `USER` | Detalhes da categoria (owner ou admin) |
+| `PUT` | `/api/v1/categories/:id` | Sessão + CSRF | `USER` | Atualiza nome, descrição ou cor da categoria |
+| `DELETE`| `/api/v1/categories/:id` | Sessão + CSRF | `USER` | Remoção lógica da categoria e desvínculo das tarefas |
 
 ---
 
